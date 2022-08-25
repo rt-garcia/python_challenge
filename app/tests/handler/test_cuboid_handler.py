@@ -212,7 +212,7 @@ class TestCuboidUpdate:
     @staticmethod
     def test_should_return_not_found_if_cuboid_doesnt_exists(test_client):
         response = test_client.patch(
-            f"/cuboids/0",
+            "/cuboids/0",
             data=json.dumps(
                 {"width": 1, "height": 1, "depth": 1}),
             content_type="application/json",
@@ -234,11 +234,16 @@ class TestCuboidDelete:
         return cuboid
 
     @staticmethod
-    def test_should_delete_the_cuboid():
-        response = []
+    def test_should_delete_the_cuboid(test_client, session):
+        cuboid = TestCuboidDelete._before_each(session)
+        response = test_client.delete(
+            f"/cuboids/{cuboid.id}"
+        )
         assert response.status_code == HTTPStatus.OK
 
     @staticmethod
-    def test_should_return_not_found_if_cuboid_doesnt_exists():
-        response = []
+    def test_should_return_not_found_if_cuboid_doesnt_exists(test_client):
+        response = test_client.delete(
+            "/cuboids/0"
+        )
         assert response.status_code == HTTPStatus.NOT_FOUND

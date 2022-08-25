@@ -1,4 +1,3 @@
-from email.policy import HTTP
 from http import HTTPStatus
 from flask import Blueprint, jsonify, request
 from app.api.model.cuboid import Cuboid
@@ -68,10 +67,15 @@ def update_cuboid(cuboid_id):
     if cuboid.bag.available_volume < cuboid.volume:
         return "", HTTPStatus.UNPROCESSABLE_ENTITY
 
-    db.session.commit()   
-    return jsonify(cuboid_schema.dump(cuboid)), HTTPStatus.OK 
+    db.session.commit()
+    return jsonify(cuboid_schema.dump(cuboid)), HTTPStatus.OK
 
 
 @cuboid_api.route("/<int:cuboid_id>", methods=["DELETE"])
 def delete_cuboid(cuboid_id):
-    pass
+    cuboid = Cuboid.query.get(cuboid_id)
+    if cuboid is None:
+        return "", HTTPStatus.NOT_FOUND
+    db.session.delete(cuboid)
+    db.session.commit()
+    return "", HTTPStatus.OK
