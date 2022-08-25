@@ -17,8 +17,12 @@ def list_cuboids():
 
 
 @cuboid_api.route("/<int:cuboid_id>", methods=["GET"])
-def get_cuboid():
-    return "", HTTPStatus.OK
+def get_cuboid(cuboid_id):
+    cuboid_schema = CuboidSchema()
+    cuboid = Cuboid.query.get(cuboid_id)
+    if cuboid is None:
+        return "", HTTPStatus.NOT_FOUND
+    return jsonify(cuboid_schema.dump(cuboid)), HTTPStatus.OK
 
 
 @cuboid_api.route("/", methods=["POST"])
