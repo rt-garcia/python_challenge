@@ -1,6 +1,8 @@
+from email.policy import HTTP
 from http import HTTPStatus
 from flask import Blueprint, jsonify, request
 from app.api.model.cuboid import Cuboid
+from app.api.model.bag import Bag
 from app.api.schema.cuboid import CuboidSchema
 from app.api.db import db
 
@@ -36,7 +38,40 @@ def create_cuboid():
         depth=content["depth"],
         bag_id=content["bag_id"],
     )
+
+    bag = Bag.query.get(content["bag_id"])
+    if bag is None:
+        return "", HTTPStatus.NOT_FOUND
+
+    if bag.available_volume < cuboid.volume:
+        return jsonify(message="Insufficient capacity in bag"), HTTPStatus.UNPROCESSABLE_ENTITY
+
     db.session.add(cuboid)
     db.session.commit()
 
     return jsonify(cuboid_schema.dump(cuboid)), HTTPStatus.CREATED
+
+
+@cuboid_api.route("/<int:cuboid_id>", methods=["PATCH"])
+def update_cuboid(cuboid_id):
+    content = request.json
+    cuboid_schema = CuboidSchema()
+    cuboid = Cuboid.query.get(cuboid_id)
+
+    if cuboid is None:
+        return "", HTTPStatus.NOT_FOUND
+
+    cuboid.height = content["height"]
+    cuboid.width = content["width"]
+    cuboid.depth = content["depth"]
+
+    if cuboid.bag.available_volume < cuboid.volume:
+        return "", HTTPStatus.UNPROCESSABLE_ENTITY
+
+    db.session.commit()   
+    return jsonify(cuboid_schema.dump(cuboid)), HTTPStatus.OK 
+
+
+@cuboid_api.route("/<int:cuboid_id>", methods=["DELETE"])
+def delete_cuboid(cuboid_id):
+    pass

@@ -163,22 +163,34 @@ class TestCuboidUpdate:
         return [bag, cuboid]
 
     @staticmethod
-    def test_should_update_cuboid(session):
+    def test_should_update_cuboid(test_client, session):
         # pylint: disable=unused-variable
         bag, cuboid = TestCuboidUpdate._before_each(session)
 
         # DO NOT modify the new_width, new_height and new_depth values.
         # The test case should pass with these values.
-        new_width = 5
-        new_height = 5
-        new_depth = 5
+        new_width = 3
+        new_height = 3
+        new_depth = 3
 
-        response = []
+        response = test_client.patch(
+            f"/cuboids/{cuboid.id}",
+            data=json.dumps(
+                {"width": new_width, "height": new_height, "depth": new_depth}),
+            content_type="application/json",
+        )
+        res = response.get_json()
 
         assert response.status_code == HTTPStatus.OK
+        assert res["width"] == new_width
+        assert res["depth"] == new_depth
+        assert res["height"] == new_height
+        assert res["volume"] == new_width * new_depth * new_height
+        assert res["bag"]["id"] == bag.id
+
 
     @staticmethod
-    def test_should_fail_if_insufficient_capacity(session):
+    def test_should_fail_if_insufficient_capacity(test_client, session):
         # pylint: disable=unused-variable
         bag, cuboid = TestCuboidUpdate._before_each(session)
 
@@ -188,13 +200,23 @@ class TestCuboidUpdate:
         new_height = 6
         new_depth = 6
 
-        response = []
+        response = test_client.patch(
+            f"/cuboids/{cuboid.id}",
+            data=json.dumps(
+                {"width": new_width, "height": new_height, "depth": new_depth}),
+            content_type="application/json",
+        )
 
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     @staticmethod
-    def test_should_return_not_found_if_cuboid_doesnt_exists():
-        response = []
+    def test_should_return_not_found_if_cuboid_doesnt_exists(test_client):
+        response = test_client.patch(
+            f"/cuboids/0",
+            data=json.dumps(
+                {"width": 1, "height": 1, "depth": 1}),
+            content_type="application/json",
+        )
         assert response.status_code == HTTPStatus.NOT_FOUND
 
 
